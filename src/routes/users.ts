@@ -81,7 +81,7 @@ router.post('/login',
     // errorsが空じゃない時400を返す
     if (!errors.isEmpty()) {
       return res.status(400).json({
-        reason: "パラメータ不足",
+        message: "パラメータ不足",
         errors: errors.array()
       })
     }
@@ -89,28 +89,59 @@ router.post('/login',
     res.status(200).json({message: 'ok'})
 
   } catch (err) {
+    console.error(err);
   return res.sendStatus(500);
   }
 })
 
 // 借り出し記録 --------------------------------------------------
-// router.get('/history', async(req, res) => {
-//   try {
-//
-//     //ログインしているかどうかチェック
-//     if (!req.user) {
-//       return res.status(401).json({ reason: 'ログインしてください' });
-//     }
-//
-//     const info = await prisma.user.findUnique({
-//       where: {}
-//     })
-//
-//   } catch (err) {
-//     console.error(err);
-//     res.sendStatus(500);
-//   }
-// }
+router.get('/history', async (req, res) => {
+  try {
+    if (!req.user) {
+      return res.status(401).json({ reason: 'ログインしてください' });
+    }
+
+    const userid = req.user.id;
+
+    // ユーザーの借り出し記録をすべて取得
+    const logs = await prisma.rentalLog.findMany({
+      where: { userId: userid },
+      include: {
+        book: {
+          select: {
+            isbn: true,
+            title: true,
+          }
+        }
+      },
+      orderBy: {
+        checkoutDate: 'desc' // 貸出日の新しい順
+      }
+    });
+
+    if (!logs.length) {
+      return res.status(404).json({message: "借り出し記録がありません"})
+    }
+
+    // 記録を取り出して表示
+    const history = logs.map((log) => ({
+      id: log.id,
+      book: {
+        isbn: Number(log.book.isbn),
+        name: log.book.title,
+      },
+      checkout_date: log.checkoutDate,
+      due_date: log.dueDate,
+      returned_date: log.returnedDate,
+    }));
+
+    return res.status(200).json({ history });
+
+  } catch (err) {
+    console.error(err);
+    res.sendStatus(500);
+  }
+});
 
 // ユーザー名変更 --------------------------------------------------
 router.put('/change',
@@ -120,7 +151,8 @@ router.put('/change',
     const errors = validationResult(req)
     if (!errors.isEmpty()) {
       return res.status(400).json({
-        reason: "パラメータ不足"
+        reason: "パラメータ不足",
+        errors: errors.array()
       })
     }
 

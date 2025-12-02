@@ -108,8 +108,7 @@ router.get('/detail/:isbn',
 
 // 書籍貸出 --------------------------------------------------
 router.post('/rental',
-  check('book_id').notEmpty().withMessage("book_id は必須です")
-    .isNumeric().withMessage("book_idは数値で入力してください"),
+  check('book_id').notEmpty().isNumeric(),
   async (req, res) => {
   try {
     // 入力チェック
