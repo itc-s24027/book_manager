@@ -1,0 +1,82 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider          = "mysql"
+  url               = env("DATABASE_URL")
+  shadowDatabaseUrl = env("SHADOW_DATABASE_URL")
+}
+
+//著者
+model Author {
+  id        String  @id @default(uuid(7)) @db.VarChar(36) //主キー
+  name      String  @db.VarChar(128)
+  isDeleted Boolean @default(false)
+  Book      Book[]
+
+  @@index([name])
+  @@map("author")
+}
+
+//出版社
+model Publisher {
+  id        String  @id @default(uuid(7)) @db.VarChar(36) //主キー
+  name      String  @db.VarChar(128)
+  isDeleted Boolean @default(false)
+  Book      Book[]
+
+  @@map("publisher")
+}
+
+//利用者
+model User {
+  id         String      @id @default(uuid(7)) @db.VarChar(36) //キー
+  email      String      @unique @db.VarChar(254)
+  name       String      @db.VarChar(512)
+  password   String      @db.VarChar(256)
+  isAdmin    Boolean     @default(false)
+  created_at DateTime    @default(now())
+  updated_at DateTime    @updatedAt
+  isDeleted  Boolean     @default(false)
+  RentalLog  RentalLog[]
+
+  @@map("user")
+}
+
+//書籍
+model Book {
+  isbn             BigInt      @id @db.UnsignedBigInt //主キー
+  title            String      @db.VarChar(512)
+  authorId         String      @db.VarChar(36)
+  author           Author      @relation(fields: [authorId], references: [id])
+  publisherId      String      @db.VarChar(36)
+  publisher        Publisher   @relation(fields: [publisherId], references: [id])
+  publicationYear  Int         @db.UnsignedInt
+  publicationMonth Int         @db.UnsignedTinyInt
+  isDeleted        Boolean     @default(false)
+  RentalLog        RentalLog[]
+
+  @@map("book")
+}
+
+//貸出記録
+model RentalLog {
+  id           String    @id @default(uuid(7)) @db.VarChar(36)
+  bookIsbn     BigInt    @db.UnsignedBigInt
+  book         Book      @relation(fields: [bookIsbn], references: [isbn])
+  userId       String    @db.VarChar(36)
+  user         User      @relation(fields: [userId], references: [id])
+  checkoutDate DateTime
+  dueDate      DateTime
+  returnedDate DateTime? @db.DateTime
+
+  @@map("rental_log")
+}

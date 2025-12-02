@@ -1,0 +1,5 @@
+@import "tailwindcss";
+
+body {
+    @apply container px-8 mx-auto bg-white dark:bg-gray-950 dark:text-white
+}
