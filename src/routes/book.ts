@@ -1,5 +1,4 @@
 import {Router} from 'express'
-import passport from '../libs/auth.js'
 import {check, validationResult} from "express-validator";
 import prisma from '../libs/db.js'
 

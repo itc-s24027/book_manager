@@ -22,7 +22,7 @@ passport.use(new LocalStrategy({
     }
 
     // emailとpasswordの組み合わせが正しい　ログイン成功
-    return done(null, {id: user.id,name: user.name})
+    return done(null, {id: user.id,name: user.name,isAdmin: user.isAdmin})
   } catch (e) {
     // データベース問い合わせでエラーが発生
     return done(e)
